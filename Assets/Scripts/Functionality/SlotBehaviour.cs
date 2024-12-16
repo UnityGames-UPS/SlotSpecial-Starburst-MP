@@ -90,6 +90,7 @@ public class SlotBehaviour : MonoBehaviour
     private int freeSpinIndex;
     private bool isStarBurst;
     private List<int> StarBurstColumns=new();
+    private bool WasAutoSpinON=false;
 
     private void Start()
     {
@@ -188,14 +189,14 @@ public class SlotBehaviour : MonoBehaviour
         {
             StopCoroutine(AutoSpinRoutine);
             StopCoroutine(tweenroutine);
-            if (AutoSpinStop_Button) AutoSpinStop_Button.gameObject.SetActive(false);
-            if (AutoSpin_Button) AutoSpin_Button.gameObject.SetActive(true);
-            AutoSpinStop_Button.interactable = true;
             tweenroutine = null;
             AutoSpinRoutine = null;
             IsAutoSpin = false;
             StopCoroutine(StopAutoSpinCoroutine());
         }
+        if (AutoSpinStop_Button) AutoSpinStop_Button.gameObject.SetActive(false);
+        if (AutoSpin_Button) AutoSpin_Button.gameObject.SetActive(true);
+        AutoSpinStop_Button.interactable = true;
     }
     #endregion
 
@@ -224,7 +225,14 @@ public class SlotBehaviour : MonoBehaviour
         StarBurstColumns.Clear();
         isStarBurst=false;
         freeSpinIndex=0;
-        ToggleButtonGrp(true);
+        if(WasAutoSpinON){
+            AutoSpin();
+            ToggleButtonGrp(false);
+        }
+        else{
+            ToggleButtonGrp(true);
+        }
+        WasAutoSpinON = false;
     }
     #endregion
 
@@ -398,8 +406,8 @@ public class SlotBehaviour : MonoBehaviour
         SetFillImage();
         if (LineBet_text) LineBet_text.text = SocketManager.initialData.Bets[BetCounter].ToString();
         if (TotalBet_text) TotalBet_text.text = (SocketManager.initialData.Bets[BetCounter] * Lines).ToString();
-        if (TotalWin_text) TotalWin_text.text = "0.00";
-        if (Balance_text) Balance_text.text = SocketManager.playerdata.Balance.ToString("f2");
+        if (TotalWin_text) TotalWin_text.text = "0.000";
+        if (Balance_text) Balance_text.text = SocketManager.playerdata.Balance.ToString("F3");
         currentBalance = SocketManager.playerdata.Balance;
         currentTotalBet = SocketManager.initialData.Bets[BetCounter] * Lines;
         CompareBalance();
@@ -478,12 +486,13 @@ public class SlotBehaviour : MonoBehaviour
 
         tweenroutine = StartCoroutine(TweenRoutine());
 
-        if (TotalWin_text) TotalWin_text.text = "0.00";
+        if (TotalWin_text) TotalWin_text.text = "0.000";
     }
 
     //manage the Routine for spinning of the slots
     private IEnumerator TweenRoutine(bool bonus = false)
     {
+        if(IsAutoSpin) Debug.Log("Inside tween");
         if (currentBalance < currentTotalBet && !isStarBurst) // Check if balance is sufficient to place the bet
         {
             CompareBalance();
@@ -521,8 +530,10 @@ public class SlotBehaviour : MonoBehaviour
         }
         currentBalance = SocketManager.playerdata.Balance;
         StarBurstResponse starBurstResponse=null;
+        Debug.Log(SocketManager.resultData.isStarBurst + "Socket star");
         if(SocketManager.resultData.isStarBurst){
             if(IsAutoSpin){
+                WasAutoSpinON=true;
                 IsAutoSpin=false;
                 if(AutoSpinRoutine!=null){
                     StopCoroutine(AutoSpinRoutine);
@@ -534,11 +545,13 @@ public class SlotBehaviour : MonoBehaviour
             }
             if(!isStarBurst){
                 isStarBurst=true;
+                Debug.Log("isStarBurst " + isStarBurst);
                 freeSpinIndex=0;    
             }
             starBurstResponse=SocketManager.resultData.starBurstResponse[freeSpinIndex];
         }
         else{
+            WasAutoSpinON = false;
             isStarBurst=false;
             freeSpinIndex=0;
             StarBurstColumns.Clear();  
@@ -565,10 +578,21 @@ public class SlotBehaviour : MonoBehaviour
         yield return new WaitForSeconds(1f);
         KillAllTweens();
 
+        Debug.Log("isStarBurst 1 " + isStarBurst);
         if(!isStarBurst){
+            if(PaylinesCoroutine!=null)
+            {
+                StopCoroutine(PaylinesCoroutine);
+                PaylinesCoroutine = null;
+            }
             PaylinesCoroutine = StartCoroutine(CheckPayoutLineBackend(SocketManager.resultData.linesToEmit, SocketManager.resultData.FinalsymbolsToEmit));
         }
         else{
+            if(PaylinesCoroutine!=null)
+            {
+                StopCoroutine(PaylinesCoroutine);
+                PaylinesCoroutine = null;
+            }
             PaylinesCoroutine = StartCoroutine(CheckPayoutLineBackend(starBurstResponse.linesToEmit, starBurstResponse.FinalSymbolsToEmit, starBurstResponse));
         }
         yield return PaylinesCoroutine;
@@ -590,6 +614,7 @@ public class SlotBehaviour : MonoBehaviour
             IsSpinning = false;
             yield return new WaitForSeconds(2f);
         }
+        if(IsAutoSpin) Debug.Log("Outside tween");
     }
 
     void PopulateResultMatrix(){
@@ -702,12 +727,12 @@ public class SlotBehaviour : MonoBehaviour
         {
             if (TotalWin_text)
             {
-                TotalWin_text.text = winnings.ToString("f2");
+                TotalWin_text.text = winnings.ToString("F3");
             }
         });
         DOTween.To(() => balance, (val) => balance = val, newBalance, time).OnUpdate(() =>
         {
-            if (Balance_text) Balance_text.text = balance.ToString("f2");
+            if (Balance_text) Balance_text.text = balance.ToString("F3");
         });
     }
 
@@ -723,13 +748,14 @@ public class SlotBehaviour : MonoBehaviour
         balance -= bet;
         DOTween.To(() => initAmount, (val) => initAmount = val, balance, 0.8f).OnUpdate(() =>
         {
-            if (Balance_text) Balance_text.text = initAmount.ToString("f2");
+            if (Balance_text) Balance_text.text = initAmount.ToString("F3");
         });
     }
 
     //generate the payout lines generated 
     private IEnumerator CheckPayoutLineBackend(List<int> LineId, List<string> points_AnimString, StarBurstResponse SBresponse = null)
     {
+        Debug.Log("run checkpayoutlinebackedn");
         List<int> y_points = null;
         List<int> points_anim = null;
         if (LineId.Count > 0 || points_AnimString.Count > 0)
@@ -754,13 +780,15 @@ public class SlotBehaviour : MonoBehaviour
                     }
                 }
             }
+            Debug.Log(isStarBurst + " Count: " + StarBurstColumns.Count);
             if(isStarBurst && StarBurstColumns.Count<4){
-                // Debug.Log("Here");
+                Debug.Log("PLaying rainbow rotating animation");
                 List<int> currentAnimationColumns=new();
                 for(int i=1;i<Tempimages.Count-1;i++){
                     for(int j=0;j<Tempimages[i].slotImages.Count;j++){
                         int resultNum=SBresponse.resultMatrix[j][i];
                         if(resultNum==7 && !StarBurstColumns.Contains(i)){
+                            Debug.Log("Detected 7 in the result matrix");
                             StarBurstColumns.Add(i);
                             currentAnimationColumns.Add(i);
                             for(int k=0;k<Tempimages[i].slotImages.Count;k++){
@@ -943,7 +971,7 @@ public class SlotBehaviour : MonoBehaviour
     void ToggleButtonGrp(bool toggle)
     {
         if (SlotStart_Button) SlotStart_Button.interactable = toggle;
-        if (AutoSpin_Button && !IsAutoSpin) AutoSpin_Button.interactable = toggle;
+        if (AutoSpin_Button) AutoSpin_Button.interactable = toggle;
         if (LineBetMinus_Button) LineBetMinus_Button.interactable = toggle;
         if (TotalBetMinus_Button) TotalBetMinus_Button.interactable = toggle;
         if (LineBetPlus_Button) LineBetPlus_Button.interactable = toggle;
