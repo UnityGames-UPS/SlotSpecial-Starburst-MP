@@ -584,8 +584,9 @@ public class SlotBehaviour : MonoBehaviour
 
         PopulateResultMatrix();
 
-        if(IsTurboOn && !isStarBurst){
-            yield return new WaitForSeconds(0.1f);
+        if(IsTurboOn){
+            yield return new WaitForSeconds(0.3f);
+            StopSpinToggle=true;
         }
         else{
             for(int i=0;i<5;i++)
