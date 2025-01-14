@@ -12,7 +12,7 @@ public class ImageAnimation : MonoBehaviour
 
 	[HideInInspector] public ImageState currentAnimationState;
 	public static ImageAnimation Instance;
-	public string id;
+	internal string id;
 	public List<Sprite> textureArray;
 	public Image rendererDelegate;
 	public bool useSharedMaterial = true;

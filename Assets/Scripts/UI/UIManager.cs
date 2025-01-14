@@ -12,6 +12,7 @@ public class UIManager : MonoBehaviour
 
     [Header("Win Popup")]
     [SerializeField] private Image Win_Image;
+    [SerializeField] private Button SkipWinAnimation;
 
     [Header("Disconnection Popup")]
     [SerializeField] private Button CloseDisconnect_Button;
@@ -71,6 +72,9 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
+        if(SkipWinAnimation) SkipWinAnimation.onClick.RemoveAllListeners();
+        if(SkipWinAnimation) SkipWinAnimation.onClick.AddListener(StopWinAnimation);
+
         if (LBExit_Button) LBExit_Button.onClick.RemoveAllListeners();
         if (LBExit_Button) LBExit_Button.onClick.AddListener(delegate { ClosePopup(LBPopup_Object); });
 
