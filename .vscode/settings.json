@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "SlotMP-Starburst.sln"
+    "dotnet.defaultSolution": "SlotSpecial-Starburst-MP.sln"
 }
