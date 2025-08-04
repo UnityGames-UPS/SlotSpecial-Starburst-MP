@@ -382,9 +382,12 @@ public class UIManager : MonoBehaviour
 
   private void CallOnExitFunction()
   {
-    isExit = true;
-    audioController.PlayButtonAudio();
-    slotManager.CallCloseSocket();
+    if (!isExit)
+    {
+      isExit = true;
+      audioController.PlayButtonAudio();
+      slotManager.CallCloseSocket();
+    }
   }
 
   private void OpenPopup(GameObject Popup)
