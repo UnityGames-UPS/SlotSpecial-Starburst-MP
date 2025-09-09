@@ -190,6 +190,7 @@ public class SocketIOManager : MonoBehaviour
     Debug.LogWarning("⚠️ Disconnected from server.");
     isConnected = false;
     ResetPingRoutine();
+    uiManager.DisconnectionPopup();
   }
 
   private void OnPongReceived(string data)
