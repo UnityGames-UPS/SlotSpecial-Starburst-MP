@@ -820,7 +820,7 @@ public class SlotBehaviour : MonoBehaviour
             Debug.LogError($"Failed to parse result number at position [{i}, {j}]: {Result[j][i]}");
             continue; // Skip this iteration if parsing fails
           }
-          if (ResultMatrix[i].slotImages[j] && !StarBurstColumns.Contains(i))
+          if (ResultMatrix[i].slotImages[j] && !StarBurstColumns.Contains(j))
           {
             ResultMatrix[i].slotImages[j].sprite = myImages[resultNum];
             string loc = i.ToString() + j.ToString();
@@ -904,7 +904,7 @@ public class SlotBehaviour : MonoBehaviour
     }
   }
 
-  private void WinningsTextAnimation(double amount)
+  private void WinningsTextAnimation(double amount, StarBurstResponse SbResponse = null)
   {
     float time = 0.8f;
     double winnings = 0;
@@ -913,7 +913,11 @@ public class SlotBehaviour : MonoBehaviour
     {
       Debug.Log("Error while conversion");
     }
-    double newBalance = balance + amount;
+    double newBalance;
+    if (SbResponse != null)
+      newBalance = SbResponse.player.balance;
+    else
+      newBalance = SocketManager.playerdata.balance;
     DOTween.To(() => winnings, val => winnings = val, amount, time).OnUpdate(() =>
     {
       if (TotalWin_text)
@@ -1054,7 +1058,7 @@ public class SlotBehaviour : MonoBehaviour
       {
         if (SBresponse.payload.winAmount > 0)
         {
-          WinningsTextAnimation(SBresponse.payload.winAmount);
+          WinningsTextAnimation(SBresponse.payload.winAmount, SBresponse);
         }
       }
 

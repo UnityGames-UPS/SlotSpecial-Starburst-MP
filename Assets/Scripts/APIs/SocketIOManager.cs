@@ -486,6 +486,7 @@ public class StarBurstResponse
 {
   public List<List<string>> matrix { get; set; }
   public Payload payload { get; set; }
+  public Player player;
 }
 
 [Serializable]
